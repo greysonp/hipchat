@@ -1,4 +1,4 @@
-package com.github.nkzawa.socketio.androidchat;
+package com.stupid.hipchat;
 
 public class Message {
 
