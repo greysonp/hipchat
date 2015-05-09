@@ -1,4 +1,4 @@
-package com.github.nkzawa.socketio.androidchat;
+package com.stupid.hipchat;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import com.github.nkzawa.emitter.Emitter;
+import com.stupid.hipchat.R;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 import org.json.JSONException;

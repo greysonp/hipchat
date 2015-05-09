@@ -1,7 +1,9 @@
-package com.github.nkzawa.socketio.androidchat;
+package com.stupid.hipchat;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+
+import com.stupid.hipchat.R;
 
 
 public class MainActivity extends ActionBarActivity {
