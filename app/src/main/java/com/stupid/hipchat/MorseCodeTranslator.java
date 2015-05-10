@@ -45,6 +45,7 @@ public class MorseCodeTranslator {
 
     private void initDictionary() {
         dictionary = new HashMap<>();
+        dictionary.put("", " ");
         dictionary.put(".-", "A");
         dictionary.put("-...", "B");
         dictionary.put("-.-.", "C");
