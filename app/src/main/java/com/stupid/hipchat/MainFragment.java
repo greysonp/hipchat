@@ -555,20 +555,24 @@ public class MainFragment extends Fragment {
     private class ShakiraJump implements SensorEventListener {
 
         private static final int JUMP_LOCK_DURATION = 1500;
+        private float lastY = 0f;
 
         @Override
         public void onSensorChanged(SensorEvent event) {
             float y = event.values[1];
+            float yDelta = Math.abs(y - lastY);
 
             // The accelerometer takes gravity into account, so if we have a near-zero acceleration in the y direction,
             // we must be near the precipice of a jump
-            if (y < 1 && !mSensorLocked) {
+            if (y < 1 && yDelta > 0.15f && !mSensorLocked) {
                 Log.d(TAG, "SEND, " + y);
                 clearMorse();
                 mVibrator.vibrate(1000);
                 attemptSend();
                 startLock(JUMP_LOCK_DURATION);
             }
+
+            lastY = y;
         }
 
         @Override
