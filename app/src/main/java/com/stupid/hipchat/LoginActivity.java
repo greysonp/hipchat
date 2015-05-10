@@ -54,6 +54,7 @@ public class LoginActivity extends Activity {
         mTextureVideoView.setScaleType(TextureVideoView.ScaleType.CENTER_CROP);
         mTextureVideoView.setDataSource(LoginActivity.this, Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.hipchat));
         mTextureVideoView.setLooping(true);
+        mTextureVideoView.setVolume(0f, 0f);
         mTextureVideoView.setListener(new TextureVideoView.MediaPlayerListener() {
             @Override
             public void onVideoPrepared() {

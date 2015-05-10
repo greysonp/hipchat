@@ -372,6 +372,15 @@ public class TextureVideoView extends TextureView implements TextureView.Surface
         }
     }
 
+    /**
+     * @see android.media.MediaPlayer#setVolume(float, float)
+     * @param leftVolume
+     * @param rightVolume
+     */
+    public void setVolume(float leftVolume, float rightVolume) {
+        mMediaPlayer.setVolume(leftVolume, rightVolume);
+    }
+
     private MediaPlayerListener mListener;
 
     /**
