@@ -12,16 +12,6 @@ import java.util.Map;
 
 public class MorseCodeTranslator {
 
-    public enum MorseCode {
-        DOT('.'), DASH('-');
-
-        public final char c;
-
-        MorseCode(char c) {
-            this.c = c;
-        }
-    }
-
     private static final String DICT_FILENAME = "morse_code_dict";
 
     private Map<String, String> dictionary;
@@ -32,8 +22,9 @@ public class MorseCodeTranslator {
         morseCodeCollection = new StringBuilder();
     }
 
-    public void collect(MorseCode morse) {
-        morseCodeCollection.append(morse.c);
+    // @param morseCode '.' or '-'
+    public void collect(char morseCode) {
+        morseCodeCollection.append(morseCode);
     }
 
     public String getTranslation(boolean andClearMorseCollection) {
