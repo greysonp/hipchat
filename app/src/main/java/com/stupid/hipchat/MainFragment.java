@@ -110,8 +110,6 @@ public class MainFragment extends Fragment {
         mShakiraJump = new ShakiraJump();
 
         mSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-        mSensorManager.registerListener(mShakira, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(mShakiraJump, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 
         setHasOptionsMenu(true);
 
@@ -213,6 +211,24 @@ public class MainFragment extends Fragment {
 
         addLog(getResources().getString(R.string.message_welcome));
         addParticipantsLog(numUsers);
+
+        // Init sensors
+        mSensorLockTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mSensorManager.registerListener(mShakira, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+                mSensorManager.registerListener(mShakiraJump, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+                mTextToSpeech.speak("Shake it!", TextToSpeech.QUEUE_ADD, null);
+            }
+        }, 5000);
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(mShakira);
+        mSensorManager.unregisterListener(mShakiraJump);
     }
 
     @Override
