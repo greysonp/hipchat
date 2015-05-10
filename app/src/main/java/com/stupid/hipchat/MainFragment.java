@@ -12,6 +12,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
@@ -68,6 +69,7 @@ public class MainFragment extends Fragment {
     private Vibrator mVibrator;
     private Timer mSensorLockTimer;
     private boolean mSensorLocked = false;
+    private TextToSpeech mTextToSpeech;
 
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
@@ -122,6 +124,13 @@ public class MainFragment extends Fragment {
         mSocket.connect();
 
         startSignIn();
+
+        mTextToSpeech = new TextToSpeech(getActivity(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                // Assume success for the hackathon
+            }
+        });
     }
 
     @Override
@@ -499,8 +508,6 @@ public class MainFragment extends Fragment {
                 shakeRight();
             } else if (y < -SIDE_THRESHOLD && !mSensorLocked) {
                 shakeLeft();
-//            } else if (x < -FRONT_THRESHOLD && !mSensorLocked) {
-//                forwardThrust();
             } else if (x > BACK_THRESHOLD && !mSensorLocked) {
                 backThrust();
             }
@@ -532,6 +539,7 @@ public class MainFragment extends Fragment {
             Log.d(TAG, letter == null ? "null" : letter);
             if (letter != null) {
                 mInputMessageView.append(letter);
+                mTextToSpeech.speak(letter, TextToSpeech.QUEUE_ADD, null);
                 mVibrator.vibrate(new long[] {0, 100, 100, 100}, -1);
                 clearMorse();
             }
