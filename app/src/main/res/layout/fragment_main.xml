@@ -40,13 +40,6 @@
             android:maxLines="1"
             android:singleLine="true"/>
 
-        <ImageButton
-            android:id="@+id/send_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_send"
-            android:contentDescription="@string/action_send"/>
-
     </LinearLayout>
 
 </LinearLayout>

@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.*;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
@@ -156,14 +155,6 @@ public class MainFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-            }
-        });
-
-        ImageButton sendButton = (ImageButton) view.findViewById(R.id.send_button);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                attemptSend();
             }
         });
     }
@@ -452,13 +443,13 @@ public class MainFragment extends Fragment {
         }
 
         private void shakeRight() {
-            Log.d(TAG, "RIGHT");
+            Log.d(TAG, "-");
             translator.collect('-');
             startLock(SIDE_DURATION);
         }
 
         private void shakeLeft() {
-            Log.d(TAG, "LEFT");
+            Log.d(TAG, ".");
             translator.collect('.');
             startLock(SIDE_DURATION);
         }
@@ -466,11 +457,15 @@ public class MainFragment extends Fragment {
         private void backThrust() {
             String letter = translator.getTranslation(true);
             Log.d(TAG, letter == null ? "null" : letter);
+            if (letter != null) {
+                mInputMessageView.append(letter);
+            }
             startLock(BACK_DURATION);
         }
 
         private void forwardThrust() {
             Log.d(TAG, "SEND");
+            attemptSend();
             startLock(FORWARD_DURATION);
         }
 
