@@ -162,9 +162,9 @@ public class MainFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (null == mUsername) return;
-                if (! mSocket.connected()) return;
+                if (!mSocket.connected()) return;
 
-                if (! mTyping) {
+                if (!mTyping) {
                     mTyping = true;
                     mSocket.emit("typing");
                 }
@@ -231,14 +231,14 @@ public class MainFragment extends Fragment {
 
     private void addMessage(String username, String message) {
         mMessages.add(new Message.Builder(Message.TYPE_MESSAGE)
-                .username(username).message(message).build());
+                .username(username, username.equalsIgnoreCase(mUsername)).message(message).build());
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         scrollToBottom();
     }
 
     private void addTyping(String username) {
         mMessages.add(new Message.Builder(Message.TYPE_ACTION)
-                .username(username).build());
+                .username(username, username.equalsIgnoreCase(mUsername)).build());
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         scrollToBottom();
     }

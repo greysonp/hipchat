@@ -9,6 +9,7 @@ public class Message {
     private int mType;
     private String mMessage;
     private String mUsername;
+    private boolean mFromSelf;
 
     private Message() {}
 
@@ -24,18 +25,22 @@ public class Message {
         return mUsername;
     };
 
+    public boolean isFromSelf() { return mFromSelf; };
+
 
     public static class Builder {
         private final int mType;
         private String mUsername;
         private String mMessage;
+        private boolean mFromSelf;
 
         public Builder(int type) {
             mType = type;
         }
 
-        public Builder username(String username) {
+        public Builder username(String username, boolean fromSelf) {
             mUsername = username;
+            mFromSelf = fromSelf;
             return this;
         }
 
@@ -48,6 +53,7 @@ public class Message {
             Message message = new Message();
             message.mType = mType;
             message.mUsername = mUsername;
+            message.mFromSelf = mFromSelf;
             message.mMessage = mMessage;
             return message;
         }
