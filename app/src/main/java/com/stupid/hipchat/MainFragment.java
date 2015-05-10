@@ -424,12 +424,13 @@ public class MainFragment extends Fragment {
         }
     };
 
-    private static class Shakira implements SensorEventListener{
+    private class Shakira implements SensorEventListener{
 
         private float x = 0;
         private float y = 0;
         private Timer lockTimer;
         private boolean locked;
+        private MorseCodeTranslator translator;
 
         private static final float SIDE_THRESHOLD = 1.25f;
         private static final float FRONT_THRESHOLD = 0.75f;
@@ -439,8 +440,10 @@ public class MainFragment extends Fragment {
         private static final int FORWARD_DURATION = 750;
         private static final int BACK_DURATION = 1000;
 
+
         public Shakira() {
             lockTimer = new Timer();
+            translator = new MorseCodeTranslator();
         }
 
         @Override
@@ -467,21 +470,24 @@ public class MainFragment extends Fragment {
 
         private void shakeRight() {
             Log.d(TAG, "RIGHT");
+            translator.collect('-');
             startLock(SIDE_DURATION);
         }
 
         private void shakeLeft() {
             Log.d(TAG, "LEFT");
+            translator.collect('.');
             startLock(SIDE_DURATION);
         }
 
         private void backThrust() {
-            Log.d(TAG, "BACK");
+            String letter = translator.getTranslation(true);
+            Log.d(TAG, letter == null ? "null" : letter);
             startLock(BACK_DURATION);
         }
 
         private void forwardThrust() {
-            Log.d(TAG, "FORWARD");
+            Log.d(TAG, "SEND");
             startLock(FORWARD_DURATION);
         }
 
