@@ -9,6 +9,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
@@ -497,6 +498,11 @@ public class MainFragment extends Fragment {
         mInputMorseView.removeAllViews();
     }
 
+    private void playDing() {
+        MediaPlayer mp = MediaPlayer.create(getActivity(), R.raw.ding);
+        mp.start();
+    }
+
     private class Shakira implements SensorEventListener{
 
         private float x = 0;
@@ -585,6 +591,7 @@ public class MainFragment extends Fragment {
                 clearMorse();
                 mVibrator.vibrate(1000);
                 attemptSend();
+                playDing();
                 startLock(JUMP_LOCK_DURATION);
             }
 
