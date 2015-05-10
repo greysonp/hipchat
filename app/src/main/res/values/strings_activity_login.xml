@@ -2,7 +2,7 @@
     <string name="title_activity_login">Join</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_username">What\'s your move called?</string>
+    <string name="prompt_username">name your move</string>
     <string name="action_sign_in">Shake It</string>
     <string name="action_sign_in_short">Shake It</string>
 
