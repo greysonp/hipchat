@@ -51,6 +51,8 @@ public class MainFragment extends Fragment {
 
     private SensorManager mSensorManager;
     private SensorEventListener mShakira;
+    private NotificationManager mNotificationManager;
+    private int mNotificationId = 1;
 
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
@@ -81,6 +83,8 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
         mShakira = new Shakira();
         mSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         mSensorManager.registerListener(mShakira, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
@@ -305,8 +309,6 @@ public class MainFragment extends Fragment {
                                 .setContentTitle("New shake from " + username)
                                 .setContentText(message);
 
-                NotificationManager mNotificationManager =
-                        (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
                 mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             }
 
@@ -462,12 +464,14 @@ public class MainFragment extends Fragment {
         private void shakeRight() {
             Log.d(TAG, "-");
             translator.collect('-');
+            notifyCollection();
             startLock(SIDE_DURATION);
         }
 
         private void shakeLeft() {
             Log.d(TAG, ".");
             translator.collect('.');
+            notifyCollection();
             startLock(SIDE_DURATION);
         }
 
@@ -476,12 +480,14 @@ public class MainFragment extends Fragment {
             Log.d(TAG, letter == null ? "null" : letter);
             if (letter != null) {
                 mInputMessageView.append(letter);
+                notifyMessage();
             }
             startLock(BACK_DURATION);
         }
 
         private void forwardThrust() {
             Log.d(TAG, "SEND");
+            notifySend();
             attemptSend();
             startLock(FORWARD_DURATION);
         }
@@ -494,6 +500,36 @@ public class MainFragment extends Fragment {
                     locked = false;
                 }
             }, duration);
+        }
+
+        private void notifyCollection() {
+            mNotificationManager.cancel(mNotificationId - 1);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(getActivity())
+                            .setSmallIcon(R.drawable.logo)
+                            .setContentTitle("Entry")
+                            .setContentText(translator.getMorseCollection());
+            mNotificationManager.notify(mNotificationId++, builder.build());
+        }
+
+        private void notifyMessage() {
+            mNotificationManager.cancel(mNotificationId - 1);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(getActivity())
+                            .setSmallIcon(R.drawable.logo)
+                            .setContentTitle("Current Message")
+                            .setContentText(mInputMessageView.getText().toString());
+            mNotificationManager.notify(mNotificationId++, builder.build());
+        }
+
+        private void notifySend() {
+            mNotificationManager.cancel(mNotificationId - 1);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(getActivity())
+                            .setSmallIcon(R.drawable.logo)
+                            .setContentTitle("Message Sent!")
+                            .setContentText(mInputMessageView.getText().toString());
+            mNotificationManager.notify(mNotificationId++, builder.build());
         }
     }
 }
