@@ -1,13 +1,47 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:id="@+id/container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context=".MainActivity"
-             tools:ignore="MergeRootFrame">
+<com.sothree.slidinguppanel.SlidingUpPanelLayout
+    android:id="@+id/main_container"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sothree="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="top"
+    sothree:umanoPanelHeight="40dp"
+    sothree:umanoShadowHeight="4dp"
+    sothree:umanoOverlay="true"
+    tools:context=".MainActivity"
+    tools:ignore="MergeRootFrame">
 
     <fragment
-            class="com.stupid.hipchat.MainFragment"
+        class="com.stupid.hipchat.MainFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:id="@+id/main_cheatsheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:orientation="vertical">
+
+        <ImageView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-</FrameLayout>
+            android:layout_height="230dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/cheatsheet"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="#f39c12">
+
+            <ImageView
+                android:id="@+id/main_cheatsheet_arrow"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/arrow_down"
+                android:scaleType="center"/>
+        </FrameLayout>
+
+    </LinearLayout>
+</com.sothree.slidinguppanel.SlidingUpPanelLayout>
