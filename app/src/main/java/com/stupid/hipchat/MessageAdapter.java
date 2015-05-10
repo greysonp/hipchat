@@ -2,9 +2,11 @@ package com.stupid.hipchat;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.stupid.hipchat.R;
@@ -47,6 +49,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         Message message = mMessages.get(position);
         viewHolder.setMessage(message.getMessage());
         viewHolder.setUsername(message.getUsername());
+        viewHolder.setIsFromSelf(message.isFromSelf());
     }
 
     @Override
@@ -60,12 +63,17 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
+
+        private LinearLayout mItemView;
+        private LinearLayout mMessageWhale;
         private TextView mUsernameView;
         private TextView mMessageView;
 
         public ViewHolder(View itemView) {
             super(itemView);
 
+            mItemView = (LinearLayout) itemView;
+            mMessageWhale = (LinearLayout) itemView.findViewById(R.id.message_whale);
             mUsernameView = (TextView) itemView.findViewById(R.id.username);
             mMessageView = (TextView) itemView.findViewById(R.id.message);
         }
@@ -79,6 +87,17 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         public void setMessage(String message) {
             if (null == mMessageView) return;
             mMessageView.setText(message);
+        }
+
+        public void setIsFromSelf(boolean fromSelf) {
+            if (getItemViewType() == Message.TYPE_MESSAGE) {
+                int msgDrawable = fromSelf ?
+                        R.drawable.message_tail_right : R.drawable.message_tail_left;
+                mMessageWhale.setBackgroundResource(msgDrawable);
+
+                int gravity = fromSelf ? Gravity.RIGHT : Gravity.LEFT;
+                mItemView.setGravity(gravity);
+            }
         }
 
         private int getUsernameColor(String username) {
