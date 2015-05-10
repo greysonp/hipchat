@@ -11,6 +11,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
@@ -62,8 +63,11 @@ public class MainFragment extends Fragment {
 
     private SensorManager mSensorManager;
     private SensorEventListener mShakira;
+    private SensorEventListener mShakiraJump;
     private NotificationManager mNotificationManager;
-    private int mNotificationId = 1;
+    private Vibrator mVibrator;
+    private Timer mSensorLockTimer;
+    private boolean mSensorLocked = false;
 
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
@@ -96,10 +100,15 @@ public class MainFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        mVibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        mSensorLockTimer = new Timer();
 
         mShakira = new Shakira();
+        mShakiraJump = new ShakiraJump();
+
         mSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         mSensorManager.registerListener(mShakira, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(mShakiraJump, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 
         setHasOptionsMenu(true);
 
@@ -162,9 +171,9 @@ public class MainFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (null == mUsername) return;
-                if (! mSocket.connected()) return;
+                if (!mSocket.connected()) return;
 
-                if (! mTyping) {
+                if (!mTyping) {
                     mTyping = true;
                     mSocket.emit("typing");
                 }
@@ -431,25 +440,52 @@ public class MainFragment extends Fragment {
         }
     };
 
+    private void startLock(int duration) {
+        mSensorLocked = true;
+        mSensorLockTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mSensorLocked = false;
+            }
+        }, duration);
+    }
+
+    private ImageView createMorseImage(boolean isDash) {
+        ImageView morseImage = new ImageView(getActivity());
+        Resources r = getResources();
+        int paddingPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, r.getDisplayMetrics());
+        morseImage.setPadding(paddingPixels, 0, paddingPixels, 0);
+        if (isDash) {
+            morseImage.setImageResource(R.drawable.dash);
+        } else {
+            morseImage.setImageResource(R.drawable.dot);
+        }
+        return morseImage;
+    }
+
+    private void addMorse(char morse) {
+        boolean isDash = morse == '-';
+        mInputMorseView.addView(createMorseImage(isDash));
+    }
+
+    private void clearMorse() {
+        mInputMorseView.removeAllViews();
+    }
+
     private class Shakira implements SensorEventListener{
 
         private float x = 0;
         private float y = 0;
-        private Timer lockTimer;
-        private boolean locked;
         private MorseCodeTranslator translator;
 
         private static final float SIDE_THRESHOLD = 1.25f;
-        private static final float FRONT_THRESHOLD = 0.75f;
         private static final float BACK_THRESHOLD = 1f;
 
         private static final int SIDE_DURATION = 750;
-        private static final int FORWARD_DURATION = 750;
         private static final int BACK_DURATION = 1000;
 
 
         public Shakira() {
-            lockTimer = new Timer();
             translator = new MorseCodeTranslator();
         }
 
@@ -459,13 +495,13 @@ public class MainFragment extends Fragment {
             y = event.values[1];
 
             // Do stuff
-            if (y > SIDE_THRESHOLD && !locked) {
+            if (y > SIDE_THRESHOLD && !mSensorLocked) {
                 shakeRight();
-            } else if (y < -SIDE_THRESHOLD && !locked) {
+            } else if (y < -SIDE_THRESHOLD && !mSensorLocked) {
                 shakeLeft();
-            } else if (x < -FRONT_THRESHOLD && !locked) {
-                forwardThrust();
-            } else if (x > BACK_THRESHOLD && !locked) {
+//            } else if (x < -FRONT_THRESHOLD && !mSensorLocked) {
+//                forwardThrust();
+            } else if (x > BACK_THRESHOLD && !mSensorLocked) {
                 backThrust();
             }
         }
@@ -478,6 +514,7 @@ public class MainFragment extends Fragment {
         private void shakeRight() {
             Log.d(TAG, "-");
             translator.collect('-');
+            mVibrator.vibrate(500);
             notifyCollection();
             startLock(SIDE_DURATION);
         }
@@ -485,6 +522,7 @@ public class MainFragment extends Fragment {
         private void shakeLeft() {
             Log.d(TAG, ".");
             translator.collect('.');
+            mVibrator.vibrate(250);
             notifyCollection();
             startLock(SIDE_DURATION);
         }
@@ -494,91 +532,40 @@ public class MainFragment extends Fragment {
             Log.d(TAG, letter == null ? "null" : letter);
             if (letter != null) {
                 mInputMessageView.append(letter);
-                notifyMessage();
+                mVibrator.vibrate(new long[] {0, 100, 100, 100}, -1);
+                clearMorse();
             }
             startLock(BACK_DURATION);
         }
 
-        private void forwardThrust() {
-            Log.d(TAG, "SEND");
-            notifySend();
-            attemptSend();
-            startLock(FORWARD_DURATION);
-        }
-
-        private void startLock(int duration) {
-            locked = true;
-            lockTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    locked = false;
-                }
-            }, duration);
-        }
-
         private void notifyCollection() {
-            /*mNotificationManager.cancel(mNotificationId - 1);
-            NotificationCompat.Builder builder =
-                    new NotificationCompat.Builder(getActivity())
-                            .setSmallIcon(R.drawable.logo)
-                            .setContentTitle("Entry")
-                            .setContentText(translator.getMorseCollection());
-            mNotificationManager.notify(mNotificationId++, builder.build());*/
             String morseCollection = translator.getMorseCollection();
             addMorse(morseCollection.charAt(morseCollection.length() - 1));
         }
+    }
 
-        private void notifyMessage() {
-            /*mNotificationManager.cancel(mNotificationId - 1);
-            NotificationCompat.Builder builder =
-                    new NotificationCompat.Builder(getActivity())
-                            .setSmallIcon(R.drawable.logo)
-                            .setContentTitle("Current Message")
-                            .setContentText(mInputMessageView.getText().toString());
-            mNotificationManager.notify(mNotificationId++, builder.build());*/
-            clearMorse();
-        }
+    private class ShakiraJump implements SensorEventListener {
 
-        private void notifySend() {
-            /*mNotificationManager.cancel(mNotificationId - 1);
-            NotificationCompat.Builder builder =
-                    new NotificationCompat.Builder(getActivity())
-                            .setSmallIcon(R.drawable.logo)
-                            .setContentTitle("Message Sent!")
-                            .setContentText(mInputMessageView.getText().toString());
-            mNotificationManager.notify(mNotificationId++, builder.build());*/
-            clearMorse();
-        }
+        private static final int JUMP_LOCK_DURATION = 1500;
 
-        private ImageView createMorseImage(boolean isDash) {
-            ImageView morseImage = new ImageView(getActivity());
-            Resources r = getResources();
-            int paddingPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, r.getDisplayMetrics());
-            morseImage.setPadding(paddingPixels, 0, paddingPixels, 0);
-            if (isDash) {
-                morseImage.setImageResource(R.drawable.dash);
-            } else {
-                morseImage.setImageResource(R.drawable.dot);
-            }
-            return morseImage;
-        }
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            float y = event.values[1];
 
-        private void addMorse(char morse) {
-            boolean isDash = morse == '-';
-            mInputMorseView.addView(createMorseImage(isDash));
-        }
-
-        private void displayMorse(String morseString) {
-            clearMorse();
-            char[] charArray = morseString.toCharArray();
-            for (int i = 0; i < charArray.length; i++) {
-                boolean isDash = charArray[i] == '-';
-                mInputMorseView.addView(createMorseImage(isDash));
+            // The accelerometer takes gravity into account, so if we have a near-zero acceleration in the y direction,
+            // we must be near the precipice of a jump
+            if (y < 1 && !mSensorLocked) {
+                Log.d(TAG, "SEND, " + y);
+                clearMorse();
+                mVibrator.vibrate(1000);
+                attemptSend();
+                startLock(JUMP_LOCK_DURATION);
             }
         }
 
-        private void clearMorse() {
-            mInputMorseView.removeAllViews();
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            // Do nothing
         }
     }
 }
