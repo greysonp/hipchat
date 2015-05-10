@@ -4,7 +4,6 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,27 +12,44 @@ import java.util.Map;
 
 public class MorseCodeTranslator {
 
+    public enum MorseCode {
+        DOT('.'), DASH('-');
+
+        public final char c;
+
+        MorseCode(char c) {
+            this.c = c;
+        }
+    }
+
     private static final String DICT_FILENAME = "morse_code_dict";
 
     private Map<String, String> dictionary;
+    private StringBuilder morseCodeCollection;
 
     public MorseCodeTranslator(Resources res) throws IOException {
         initDictionary(res);
+        morseCodeCollection = new StringBuilder();
     }
 
-    // Straight up translate a morse code string
-    public String translate(String morseCode) {
-        return dictionary.get(morseCode);
+    public void collect(MorseCode morse) {
+        morseCodeCollection.append(morse.c);
     }
 
-    // @param morse '.' or '-'
-    public void collect(char morse) {
+    public String getTranslation(boolean andClearMorseCollection) {
+        String code = getMorseCollection();
+        if (andClearMorseCollection) {
+            clearMorseCollection();
+        }
+        return dictionary.get(code);
     }
 
-    // trigger translation from collected morse characters
-    // + clear collection buffer
-    public String getTranslation() {
-        return null;
+    public String getMorseCollection() {
+        return morseCodeCollection.toString();
+    }
+
+    public void clearMorseCollection() {
+        morseCodeCollection = new StringBuilder();
     }
 
     private void initDictionary(Resources res) throws IOException {
