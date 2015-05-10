@@ -42,4 +42,22 @@
 
     </LinearLayout>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:orientation="vertical"
+        android:background="#34495e">
+
+        <LinearLayout
+            android:id="@+id/chat_morse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal"
+            android:animateLayoutChanges="true">
+
+            </LinearLayout>
+
+    </FrameLayout>
+
 </LinearLayout>

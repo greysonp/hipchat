@@ -54,6 +54,15 @@ public class LoginActivity extends Activity {
         mTextureVideoView.setScaleType(TextureVideoView.ScaleType.CENTER_CROP);
         mTextureVideoView.setDataSource(LoginActivity.this, Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.hipchat));
         mTextureVideoView.setLooping(true);
+        mTextureVideoView.setListener(new TextureVideoView.MediaPlayerListener() {
+            @Override
+            public void onVideoPrepared() {
+                mTextureVideoView.play();
+            }
+
+            @Override
+            public void onVideoEnd() {}
+        });
 
         // Set up title
         mLoginTitle = (TextView) findViewById(R.id.login_title);

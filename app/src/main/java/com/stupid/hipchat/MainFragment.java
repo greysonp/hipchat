@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -18,14 +19,24 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.*;
+import android.util.TypedValue;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -56,6 +67,7 @@ public class MainFragment extends Fragment {
 
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
+    private ViewGroup mInputMorseView;
     private List<Message> mMessages = new ArrayList<Message>();
     private RecyclerView.Adapter mAdapter;
     private boolean mTyping = false;
@@ -150,9 +162,9 @@ public class MainFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (null == mUsername) return;
-                if (!mSocket.connected()) return;
+                if (! mSocket.connected()) return;
 
-                if (!mTyping) {
+                if (! mTyping) {
                     mTyping = true;
                     mSocket.emit("typing");
                 }
@@ -165,6 +177,8 @@ public class MainFragment extends Fragment {
             public void afterTextChanged(Editable s) {
             }
         });
+
+        mInputMorseView = (ViewGroup) view.findViewById(R.id.chat_morse);
     }
 
     @Override
@@ -503,33 +517,68 @@ public class MainFragment extends Fragment {
         }
 
         private void notifyCollection() {
-            mNotificationManager.cancel(mNotificationId - 1);
+            /*mNotificationManager.cancel(mNotificationId - 1);
             NotificationCompat.Builder builder =
                     new NotificationCompat.Builder(getActivity())
                             .setSmallIcon(R.drawable.logo)
                             .setContentTitle("Entry")
                             .setContentText(translator.getMorseCollection());
-            mNotificationManager.notify(mNotificationId++, builder.build());
+            mNotificationManager.notify(mNotificationId++, builder.build());*/
+            String morseCollection = translator.getMorseCollection();
+            addMorse(morseCollection.charAt(morseCollection.length() - 1));
         }
 
         private void notifyMessage() {
-            mNotificationManager.cancel(mNotificationId - 1);
+            /*mNotificationManager.cancel(mNotificationId - 1);
             NotificationCompat.Builder builder =
                     new NotificationCompat.Builder(getActivity())
                             .setSmallIcon(R.drawable.logo)
                             .setContentTitle("Current Message")
                             .setContentText(mInputMessageView.getText().toString());
-            mNotificationManager.notify(mNotificationId++, builder.build());
+            mNotificationManager.notify(mNotificationId++, builder.build());*/
+            clearMorse();
         }
 
         private void notifySend() {
-            mNotificationManager.cancel(mNotificationId - 1);
+            /*mNotificationManager.cancel(mNotificationId - 1);
             NotificationCompat.Builder builder =
                     new NotificationCompat.Builder(getActivity())
                             .setSmallIcon(R.drawable.logo)
                             .setContentTitle("Message Sent!")
                             .setContentText(mInputMessageView.getText().toString());
-            mNotificationManager.notify(mNotificationId++, builder.build());
+            mNotificationManager.notify(mNotificationId++, builder.build());*/
+            clearMorse();
+        }
+
+        private ImageView createMorseImage(boolean isDash) {
+            ImageView morseImage = new ImageView(getActivity());
+            Resources r = getResources();
+            int paddingPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, r.getDisplayMetrics());
+            morseImage.setPadding(paddingPixels, 0, paddingPixels, 0);
+            if (isDash) {
+                morseImage.setImageResource(R.drawable.dash);
+            } else {
+                morseImage.setImageResource(R.drawable.dot);
+            }
+            return morseImage;
+        }
+
+        private void addMorse(char morse) {
+            boolean isDash = morse == '-';
+            mInputMorseView.addView(createMorseImage(isDash));
+        }
+
+        private void displayMorse(String morseString) {
+            clearMorse();
+            char[] charArray = morseString.toCharArray();
+            for (int i = 0; i < charArray.length; i++) {
+                boolean isDash = charArray[i] == '-';
+                mInputMorseView.addView(createMorseImage(isDash));
+            }
+        }
+
+        private void clearMorse() {
+            mInputMorseView.removeAllViews();
         }
     }
 }
