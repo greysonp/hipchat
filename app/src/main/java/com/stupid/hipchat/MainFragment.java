@@ -1,6 +1,7 @@
 package com.stupid.hipchat;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -10,6 +11,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -41,6 +43,8 @@ import java.util.TimerTask;
 public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment";
+
+    private static final int NOTIFICATION_ID = 1;
 
     private static final int REQUEST_LOGIN = 0;
 
@@ -292,19 +296,32 @@ public class MainFragment extends Fragment {
     private Emitter.Listener onNewMessage = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
+            JSONObject data = (JSONObject) args[0];
+            final String username;
+            final String message;
+            try {
+                username = data.getString("username");
+                message = data.getString("message");
+            } catch (JSONException e) {
+                return;
+            }
+
+            if (!mUsername.equalsIgnoreCase(username)) {
+                Activity activity = getActivity();
+                NotificationCompat.Builder mBuilder =
+                        new NotificationCompat.Builder(activity)
+                                .setSmallIcon(R.drawable.logo)
+                                .setContentTitle("New shake from " + username)
+                                .setContentText(message);
+
+                NotificationManager mNotificationManager =
+                        (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+            }
+
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    String message;
-                    try {
-                        username = data.getString("username");
-                        message = data.getString("message");
-                    } catch (JSONException e) {
-                        return;
-                    }
-
                     removeTyping(username);
                     addMessage(username, message);
                 }
