@@ -426,11 +426,7 @@ public class MainFragment extends Fragment {
 
         public Shakira() {
             lockTimer = new Timer();
-            try {
-                translator = new MorseCodeTranslator(getResources());
-            } catch (Exception e) {
-                /// blaaaaah
-            }
+            translator = new MorseCodeTranslator();
         }
 
         @Override
@@ -468,7 +464,8 @@ public class MainFragment extends Fragment {
         }
 
         private void backThrust() {
-            Log.d(TAG, translator.getTranslation(true));
+            String letter = translator.getTranslation(true);
+            Log.d(TAG, letter == null ? "null" : letter);
             startLock(BACK_DURATION);
         }
 
