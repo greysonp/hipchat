@@ -272,16 +272,16 @@ public class MainFragment extends Fragment {
         }
     }
 
-    private void attemptSend() {
-        if (null == mUsername) return;
-        if (!mSocket.connected()) return;
+    private boolean attemptSend() {
+        if (null == mUsername) return false;
+        if (!mSocket.connected()) return false;
 
         mTyping = false;
 
         String message = mInputMessageView.getText().toString().trim();
         if (TextUtils.isEmpty(message)) {
             mInputMessageView.requestFocus();
-            return;
+            return false;
         }
 
         mInputMessageView.setText("");
@@ -289,6 +289,8 @@ public class MainFragment extends Fragment {
 
         // perform the sending message attempt.
         mSocket.emit("new message", message);
+
+        return true;
     }
 
     private void startSignIn() {
@@ -483,7 +485,7 @@ public class MainFragment extends Fragment {
     }
 
     private void playDing() {
-        MediaPlayer mp = MediaPlayer.create(getActivity(), R.raw.ding);
+        MediaPlayer mp = MediaPlayer.create(getActivity(), R.raw.ding2);
         mp.start();
     }
 
@@ -573,9 +575,12 @@ public class MainFragment extends Fragment {
             if (y < 1 && yDelta > 0.15f && !mSensorLocked) {
                 Log.d(TAG, "SEND, " + y);
                 clearMorse();
-                mVibrator.vibrate(1000);
-                attemptSend();
-                playDing();
+                boolean sent = attemptSend();
+                if (sent) {
+                    playDing();
+                } else {
+                    mVibrator.vibrate(1000);
+                }
                 startLock(JUMP_LOCK_DURATION);
             }
 
