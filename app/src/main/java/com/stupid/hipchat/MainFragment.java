@@ -1,6 +1,7 @@
 package com.stupid.hipchat;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -10,6 +11,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -19,7 +21,6 @@ import android.util.Log;
 import android.view.*;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
@@ -42,12 +43,16 @@ public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment";
 
+    private static final int NOTIFICATION_ID = 1;
+
     private static final int REQUEST_LOGIN = 0;
 
     private static final int TYPING_TIMER_LENGTH = 600;
 
     private SensorManager mSensorManager;
     private SensorEventListener mShakira;
+    private NotificationManager mNotificationManager;
+    private int mNotificationId = 1;
 
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
@@ -78,6 +83,8 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
         mShakira = new Shakira();
         mSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         mSensorManager.registerListener(mShakira, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
@@ -156,14 +163,6 @@ public class MainFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-            }
-        });
-
-        ImageButton sendButton = (ImageButton) view.findViewById(R.id.send_button);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                attemptSend();
             }
         });
     }
@@ -292,19 +291,30 @@ public class MainFragment extends Fragment {
     private Emitter.Listener onNewMessage = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
+            JSONObject data = (JSONObject) args[0];
+            final String username;
+            final String message;
+            try {
+                username = data.getString("username");
+                message = data.getString("message");
+            } catch (JSONException e) {
+                return;
+            }
+
+            if (!mUsername.equalsIgnoreCase(username)) {
+                Activity activity = getActivity();
+                NotificationCompat.Builder mBuilder =
+                        new NotificationCompat.Builder(activity)
+                                .setSmallIcon(R.drawable.logo)
+                                .setContentTitle("New shake from " + username)
+                                .setContentText(message);
+
+                mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+            }
+
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    String message;
-                    try {
-                        username = data.getString("username");
-                        message = data.getString("message");
-                    } catch (JSONException e) {
-                        return;
-                    }
-
                     removeTyping(username);
                     addMessage(username, message);
                 }
@@ -407,12 +417,13 @@ public class MainFragment extends Fragment {
         }
     };
 
-    private static class Shakira implements SensorEventListener{
+    private class Shakira implements SensorEventListener{
 
         private float x = 0;
         private float y = 0;
         private Timer lockTimer;
         private boolean locked;
+        private MorseCodeTranslator translator;
 
         private static final float SIDE_THRESHOLD = 1.25f;
         private static final float FRONT_THRESHOLD = 0.75f;
@@ -422,8 +433,10 @@ public class MainFragment extends Fragment {
         private static final int FORWARD_DURATION = 750;
         private static final int BACK_DURATION = 1000;
 
+
         public Shakira() {
             lockTimer = new Timer();
+            translator = new MorseCodeTranslator();
         }
 
         @Override
@@ -449,22 +462,33 @@ public class MainFragment extends Fragment {
         }
 
         private void shakeRight() {
-            Log.d(TAG, "RIGHT");
+            Log.d(TAG, "-");
+            translator.collect('-');
+            notifyCollection();
             startLock(SIDE_DURATION);
         }
 
         private void shakeLeft() {
-            Log.d(TAG, "LEFT");
+            Log.d(TAG, ".");
+            translator.collect('.');
+            notifyCollection();
             startLock(SIDE_DURATION);
         }
 
         private void backThrust() {
-            Log.d(TAG, "BACK");
+            String letter = translator.getTranslation(true);
+            Log.d(TAG, letter == null ? "null" : letter);
+            if (letter != null) {
+                mInputMessageView.append(letter);
+                notifyMessage();
+            }
             startLock(BACK_DURATION);
         }
 
         private void forwardThrust() {
-            Log.d(TAG, "FORWARD");
+            Log.d(TAG, "SEND");
+            notifySend();
+            attemptSend();
             startLock(FORWARD_DURATION);
         }
 
@@ -476,6 +500,36 @@ public class MainFragment extends Fragment {
                     locked = false;
                 }
             }, duration);
+        }
+
+        private void notifyCollection() {
+            mNotificationManager.cancel(mNotificationId - 1);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(getActivity())
+                            .setSmallIcon(R.drawable.logo)
+                            .setContentTitle("Entry")
+                            .setContentText(translator.getMorseCollection());
+            mNotificationManager.notify(mNotificationId++, builder.build());
+        }
+
+        private void notifyMessage() {
+            mNotificationManager.cancel(mNotificationId - 1);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(getActivity())
+                            .setSmallIcon(R.drawable.logo)
+                            .setContentTitle("Current Message")
+                            .setContentText(mInputMessageView.getText().toString());
+            mNotificationManager.notify(mNotificationId++, builder.build());
+        }
+
+        private void notifySend() {
+            mNotificationManager.cancel(mNotificationId - 1);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(getActivity())
+                            .setSmallIcon(R.drawable.logo)
+                            .setContentTitle("Message Sent!")
+                            .setContentText(mInputMessageView.getText().toString());
+            mNotificationManager.notify(mNotificationId++, builder.build());
         }
     }
 }
