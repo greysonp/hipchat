@@ -1,7 +1,12 @@
 package com.stupid.hipchat;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -10,6 +15,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.*;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -17,7 +23,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
-import com.stupid.hipchat.R;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 import org.json.JSONException;
@@ -26,6 +31,8 @@ import org.json.JSONObject;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -33,9 +40,14 @@ import java.util.List;
  */
 public class MainFragment extends Fragment {
 
+    private static final String TAG = "MainFragment";
+
     private static final int REQUEST_LOGIN = 0;
 
     private static final int TYPING_TIMER_LENGTH = 600;
+
+    private SensorManager mSensorManager;
+    private SensorEventListener mShakira;
 
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
@@ -66,6 +78,9 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mShakira = new Shakira();
+        mSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager.registerListener(mShakira, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
 
         setHasOptionsMenu(true);
 
@@ -391,5 +406,59 @@ public class MainFragment extends Fragment {
             mSocket.emit("stop typing");
         }
     };
+
+    private static class Shakira implements SensorEventListener{
+
+        private float x = 0;
+        private float y = 0;
+        private Timer lockTimer;
+        private boolean locked;
+
+        private static final float THRESHOLD = 1.25f;
+        private static final int LOCK_DURATION = 750;
+
+        public Shakira() {
+            lockTimer = new Timer();
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            x = event.values[0];
+            y = event.values[1];
+
+            // Do stuff
+            if (y > THRESHOLD && !locked) {
+                shakeRight();
+            } else if (y < -THRESHOLD && !locked) {
+                shakeLeft();
+            }
+//            Log.d(TAG, "[" + x + "], [" + y + "], [" + zNew + "]");
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+        }
+
+        private void shakeRight() {
+            Log.d(TAG, "RIGHT");
+            startLock();
+        }
+
+        private void shakeLeft() {
+            Log.d(TAG, "LEFT");
+            startLock();
+        }
+
+        private void startLock() {
+            locked = true;
+            lockTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    locked = false;
+                }
+            }, LOCK_DURATION);
+        }
+    }
 }
 
