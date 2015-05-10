@@ -414,8 +414,13 @@ public class MainFragment extends Fragment {
         private Timer lockTimer;
         private boolean locked;
 
-        private static final float THRESHOLD = 1.25f;
-        private static final int LOCK_DURATION = 750;
+        private static final float SIDE_THRESHOLD = 1.25f;
+        private static final float FRONT_THRESHOLD = 0.75f;
+        private static final float BACK_THRESHOLD = 1f;
+
+        private static final int SIDE_DURATION = 750;
+        private static final int FORWARD_DURATION = 750;
+        private static final int BACK_DURATION = 1000;
 
         public Shakira() {
             lockTimer = new Timer();
@@ -427,37 +432,50 @@ public class MainFragment extends Fragment {
             y = event.values[1];
 
             // Do stuff
-            if (y > THRESHOLD && !locked) {
+            if (y > SIDE_THRESHOLD && !locked) {
                 shakeRight();
-            } else if (y < -THRESHOLD && !locked) {
+            } else if (y < -SIDE_THRESHOLD && !locked) {
                 shakeLeft();
+            } else if (x < -FRONT_THRESHOLD && !locked) {
+                forwardThrust();
+            } else if (x > BACK_THRESHOLD && !locked) {
+                backThrust();
             }
-//            Log.d(TAG, "[" + x + "], [" + y + "], [" + zNew + "]");
         }
 
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
+            // Do nothing
         }
 
         private void shakeRight() {
             Log.d(TAG, "RIGHT");
-            startLock();
+            startLock(SIDE_DURATION);
         }
 
         private void shakeLeft() {
             Log.d(TAG, "LEFT");
-            startLock();
+            startLock(SIDE_DURATION);
         }
 
-        private void startLock() {
+        private void backThrust() {
+            Log.d(TAG, "BACK");
+            startLock(BACK_DURATION);
+        }
+
+        private void forwardThrust() {
+            Log.d(TAG, "FORWARD");
+            startLock(FORWARD_DURATION);
+        }
+
+        private void startLock(int duration) {
             locked = true;
             lockTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     locked = false;
                 }
-            }, LOCK_DURATION);
+            }, duration);
         }
     }
 }
